@@ -1,18 +1,15 @@
 version: '3.9'
 
 services:
-
   redis:
-    platform: linux/amd64
     image: redis:6.2.6-alpine
     container_name: redis
     ports:
       - '6379:6379'
     networks:
-      - postgres
+      - pgnetwork
 
   elasticsearch:
-    platform: linux/amd64
     image: elasticsearch:7.16.3
     container_name: elasticsearch
     environment:
@@ -22,21 +19,14 @@ services:
       memlock:
         soft: -1
         hard: -1
-      nofile:
-        soft: 65536
-        hard: 65536
-    cap_add:
-      - IPC_LOCK
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
-      - 9300:9300
     networks:
-      - postgres
+      - pgnetwork
 
   kibana:
-    platform: linux/amd64
     image: kibana:7.16.3
     container_name: kibana
     depends_on:
@@ -46,10 +36,9 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     networks:
-      - postgres
+      - pgnetwork
 
-  db:
-    platform: linux/amd64
+  postgres:
     build:
       context: .
       dockerfile: PostgresDockerfile
@@ -61,12 +50,10 @@ services:
       POSTGRES_USER: nikhil
       POSTGRES_PASSWORD: nikhil
     volumes:
-      - ./data/db:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     networks:
-      - postgres
-
+      - pgnetwork
   pgadmin:
-    platform: linux/amd64
     container_name: pgadmin
     image: dpage/pgadmin4
     environment:
@@ -76,12 +63,11 @@ services:
       - "5433:80"
     restart: unless-stopped
     networks:
-      - postgres
+      - pgnetwork
     depends_on:
-      - db
+      - postgres
 
   pgsync:
-    platform: linux/amd64
     build:
       context: .
       dockerfile: PgsyncDockerfile
@@ -89,22 +75,26 @@ services:
     environment:
       - PG_USER=nikhil
       - PG_PASSWORD=nikhil
-      - PG_HOST=db
+      - PG_HOST=postgres
+      - PG_DATABASE=ascendia
       - ELASTICSEARCH_HOST=elasticsearch
       - REDIS_HOST=redis
     depends_on:
-      - db
+      - postgres
       - redis
       - elasticsearch
     networks:
-      - postgres
+      - pgnetwork
 
 volumes:
+  pgdata:
+    external: true
   elasticsearch-data:
     driver: local
 
 networks:
-  postgres:
+
+  pgnetwork:
     driver: bridge
 
 # adminer:

@@ -1,6 +1,6 @@
 [
   {
-    "database": "docker_test_db",
+    "database": "ascendia",
     "index": "ascendia-index",
     "nodes": {
       "table": "ascendia",
