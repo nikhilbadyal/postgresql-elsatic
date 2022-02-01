@@ -1,0 +1,11 @@
+[
+  {
+    "database": "docker_test_db",
+    "index": "ascendia-index",
+    "nodes": {
+      "table": "ascendia",
+      "schema": "public",
+      "columns": []
+    }
+  }
+]
